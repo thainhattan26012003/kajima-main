@@ -35,7 +35,7 @@ def eval(configuration: Config, device: str = "cpu", test_mode: bool = True):
     many_idxs = [0]
     few_idxs = [2]
     med_idxs = [1, 3]
-    evaluator = Evaluator(config, many_idxs, med_idxs, few_idxs)
+    evaluator = Evaluator(configuration, many_idxs, med_idxs, few_idxs)
     for batch_idx, batch in enumerate(dataloader):
         images = batch[0]
         labels = batch[1]
