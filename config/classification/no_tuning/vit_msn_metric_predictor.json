@@ -1,0 +1,19 @@
+{
+  "model": {
+    "method": "no_tuning",
+    "model_name": "vit_msn_small",
+    "model_path": "checkpoints/vit-msn-small",
+    "feature_matrix_path": "checkpoints/vit-msn-small/feature_matrix.pt"
+  },
+  "training": {
+    "batch_size": 16
+  },
+  "testing": {
+    "batch_size": 2
+  },
+  "data": {
+    "train_dataset_dir": "datasets/kajima_dataset",
+    "test_dataset_dir": "datasets/kajima_test_dataset",
+    "num_classes": 4
+  }
+}

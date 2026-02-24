@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  app-api:
+    build:
+      context: .
+      dockerfile: docker/app_api/Dockerfile
+    ports:
+      - '8080:8080'
+    env_file: .env
+    platform: linux/x86_64
+    volumes:
+      - ./src:/code/src
+      - ./libs:/code/libs
+    depends_on:
+      - localstack
+
+  batch-processor-api:
+    build:
+      context: .
+      dockerfile: docker/batch_processor_api/Dockerfile
+
+    env_file: .env
+    platform: linux/x86_64
+    volumes:
+      - ./src:/code/src
+      - ./libs:/code/libs
+    depends_on:
+      - localstack
+
+  localstack:
+    image: localstack/localstack
+    ports:
+      - '4566:4566'
+    environment:
+      - SERVICES=s3,sqs
+      - DEBUG=1
+      - DATA_DIR=/tmp/localstack/data
+    volumes:
+      - '${LOCALSTACK_VOLUME_DIR:-./volume}:/var/lib/localstack'
+      - '/var/run/docker.sock:/var/run/docker.sock'
+    platform: linux/x86_64

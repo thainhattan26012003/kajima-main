@@ -1,0 +1,58 @@
+{
+  "method": "bayes",
+  "metric": {
+      "name": "test/mean_acc",
+      "goal": "maximize"
+  },
+  "parameters": {
+      "batch_size": {
+          "distribution": "categorical",
+          "values": [8, 16, 32]
+      },
+      "criterion_type": {
+          "distribution": "categorical",
+          "values": ["CBL", "LA", "focal", "CE", "LADE"]
+      },
+      "init_head": {
+          "distribution": "categorical",
+          "values": ["class_mean", "no"]
+      },
+      "lr": {
+          "distribution": "uniform",
+          "min": 1e-6,
+          "max": 1e-3
+      },
+      "sampler": {
+          "distribution": "categorical",
+          "values": ["down_sampler", "class_aware_sampler", ""]
+      },
+      "optimizer": {
+          "distribution": "categorical",
+          "values": ["lion", "adam"]
+      },
+      "weight_decay": {
+          "distribution": "uniform",
+          "min": 0.0,
+          "max": 0.001
+      },
+      "lora_initialization_strategy": {
+          "distribution": "categorical",
+          "values": ["random", "dora", "rslora"]
+      },
+      "lora_rank": {
+          "distribution": "categorical",
+          "values": [16, 32, 64]
+      },
+      "num_layer_finetuned": {
+          "distribution": "int_uniform",
+          "min": 1,
+          "max": 12
+      }
+  },
+  "early_terminate": {
+      "type": "hyperband",
+      "min_iter": 10,
+      "eta": 1.5,
+      "strict": true
+  }
+}

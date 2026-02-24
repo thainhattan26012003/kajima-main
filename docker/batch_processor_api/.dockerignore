@@ -1,0 +1,72 @@
+# Version control
+.git
+.gitignore
+.gitattributes
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+*.egg-info/
+.installed.cfg
+*.egg
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Virtual environments
+venv/
+.venv/
+ENV/
+env/
+.env
+.python-version
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+*.sublime-project
+*.sublime-workspace
+
+# Data files (keep these separate)
+datasets/
+
+# Documentation and extras
+docs/
+README.md
+LICENSE
+NOTICE
+*.md
+*.rst
+examples/
+notebooks/
+.ipynb_checkpoints/
+
+# Docker related
+Dockerfile*
+docker-compose*
+.docker/
+
+# CI/CD related
+.github/
+.gitlab-ci.yml
+.travis.yml
+.circleci/
+
+# Project specific (uncomment as needed)
+# config.yaml
+# poetry.lock  # Only if you're installing from pyproject.toml
+# pyproject.toml  # Only if you're copying it into the image manually
