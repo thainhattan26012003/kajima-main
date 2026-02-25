@@ -232,12 +232,20 @@ class Trainer:
                 lr=cfg.lr,
                 weight_decay=cfg.weight_decay,
             )
+        elif cfg.optimizer == "adamw":
+            self.optimizer = torch.optim.AdamW(
+                self.model.parameters(),
+                lr=cfg.lr,
+                weight_decay=cfg.weight_decay,
+            )
         elif cfg.optimizer == "lion":
             self.optimizer = Lion(
                 self.model.parameters(),
                 lr=cfg.lr,
                 weight_decay=cfg.weight_decay,
             )
+        else:
+            raise ValueError(f"Unsupported optimizer type: {cfg.optimizer}")
 
         self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
             self.optimizer, self.cfg.num_epochs * len(self.train_dataloader)
