@@ -62,7 +62,7 @@ class Trainer:
         self.model = model
         self.plain_image_processor = plain_image_processor
         self.cfg = cfg
-        self.weight = torch.tensor(cfg.peft_training.weight).to(self.device)
+        self.weight = torch.tensor(cfg.weight).to(self.device)
 
         self.dataset_dir = dataset_dir
         self.test_dataset_dir = test_dataset_dir
