@@ -62,6 +62,7 @@ class Trainer:
         self.model = model
         self.plain_image_processor = plain_image_processor
         self.cfg = cfg
+        self.weight = torch.tensor(cfg.peft_training.weight).to(self.device)
 
         self.dataset_dir = dataset_dir
         self.test_dataset_dir = test_dataset_dir
@@ -263,7 +264,7 @@ class Trainer:
         elif criterion_type == "CBL":
             self.criterion = ClassBalancedLoss(cls_num_list=cls_num_list)
         elif criterion_type == "CE":
-            self.criterion = nn.CrossEntropyLoss()
+            self.criterion = nn.CrossEntropyLoss(weight=self.weight)
         elif criterion_type == "LADE":
             self.criterion = LADELoss(cls_num_list=cls_num_list)
         else:

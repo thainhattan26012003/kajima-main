@@ -22,6 +22,7 @@ class ModelConfig(BaseModel):
 class PeftTrainingConfig(BaseModel):
     batch_size: int = 8
     criterion_type: Literal["CBL", "LA", "focal", "CE", "LADE"]
+    weight: list[float] = [1.0] * 4
     init_head: Literal["class_mean", "no"]
     lora_initialization_strategy: Literal["dora", "random", "rslora"]
     lora_rank: int = 16
