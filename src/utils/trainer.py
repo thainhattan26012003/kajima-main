@@ -245,6 +245,13 @@ class Trainer:
                 lr=cfg.lr,
                 weight_decay=cfg.weight_decay,
             )
+        elif cfg.optimizer == "sgd":
+            self.optimizer = torch.optim.SGD(
+                self.model.parameters(),
+                lr=cfg.lr,
+                momentum=getattr(cfg, "momentum", 0.9),
+                weight_decay=cfg.weight_decay,
+            )
         else:
             raise ValueError(f"Unsupported optimizer type: {cfg.optimizer}")
 
