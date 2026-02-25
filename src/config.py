@@ -30,9 +30,9 @@ class PeftTrainingConfig(BaseModel):
     num_epochs: int = 10
     num_layer_finetuned: int | None = None  # None means all layers are finetuned
     num_workers: int = 0
-    optimizer: Literal["adam", "lion"] = "adam"
+    optimizer: Literal["adam", "lion", "adamw"] = "adam"
     print_freq: int = 1
-    sampler: Literal["down_sampler", "class_aware_sampler", ""] = "class_aware_sampler"
+    sampler: Literal["down_sampler", "class_aware_sampler", "random_sampler", ""] = "class_aware_sampler"
     seed: int = 32
     weight_decay: float = 0.0
 
