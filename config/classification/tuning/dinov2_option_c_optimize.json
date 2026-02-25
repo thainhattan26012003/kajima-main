@@ -19,7 +19,7 @@
       "num_workers": 4,
       "optimizer": "adamw",
       "print_freq": 1,
-      "sampler": "random_sampler",
+      "sampler": "class_aware_sampler",
       "seed": 42,
       "weight_decay": 0.01
     },
