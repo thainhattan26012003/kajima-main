@@ -62,6 +62,7 @@ def get_model(configuration: Config, device: str = "cpu", test_mode: bool = True
             model = create_lora_vit_model(
                 vit_classifier,
                 lora_rank=configuration.peft_training.lora_rank,
+                lora_alpha=configuration.peft_training.lora_alpha,
                 lora_initialization_strategy=configuration.peft_training.lora_initialization_strategy,
                 lora_target_modules=get_target_modules(
                     vit_classifier, configuration.peft_training.num_layer_finetuned

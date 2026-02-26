@@ -26,6 +26,7 @@ class PeftTrainingConfig(BaseModel):
     init_head: Literal["class_mean", "no"]
     lora_initialization_strategy: Literal["dora", "random", "rslora"]
     lora_rank: int = 16
+    lora_alpha: int = 16  # LoRA scaling (often 2*rank); higher = stronger adapter
     lr: float = 1e-6
     micro_batch_size: int = 8
     num_epochs: int = 10
