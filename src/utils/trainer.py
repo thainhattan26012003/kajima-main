@@ -265,7 +265,7 @@ class Trainer:
 
         criterion_type = cfg.criterion_type
         if criterion_type == "focal":
-            self.criterion = FocalLoss()
+            self.criterion = FocalLoss(weight=self.weight, gamma=2.0)
         elif criterion_type == "LA":
             self.criterion = LogitAdjustedLoss(cls_num_list=cls_num_list)
         elif criterion_type == "CBL":

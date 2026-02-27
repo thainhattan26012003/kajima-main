@@ -16,13 +16,21 @@ class FocalLoss(nn.Module):
         super().__init__()
         assert gamma >= 0
         self.gamma = gamma
-        self.weight = weight
+        # Ensure weight is a Tensor if it is passed in
+        self.register_buffer('weight', weight) 
 
     def forward(self, logit, target):
-        return focal_loss(
-            F.cross_entropy(logit, target, reduction="none", weight=self.weight),
-            self.gamma,
-        )
+        # Step 1: Calculate Cross Entropy with weight (weight)
+        # log_p = -CE
+        ce_loss = F.cross_entropy(logit, target, reduction="none", weight=self.weight)
+        
+        # Step 2: Calculate probability p_t to calculate the component (1-p_t)^gamma
+        pt = torch.exp(-ce_loss) 
+        
+        # Step 3: Calculate Focal Loss according to the formula: Loss = weight * (1-pt)^gamma * CE
+        focal_loss = (1 - pt) ** self.gamma * ce_loss
+        
+        return focal_loss.mean()
 
 
 class LogitAdjustedLoss(nn.Module):
