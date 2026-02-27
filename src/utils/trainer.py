@@ -90,9 +90,18 @@ class Trainer:
                 transforms.Lambda(rescale_image),
                 MaybeToTensor(),
                 transforms.RandomResizedCrop(
-                    resolution, interpolation=transforms.InterpolationMode.BICUBIC
+                    resolution, 
+                    scale=(0.8, 1.0), 
+                    interpolation=transforms.InterpolationMode.BICUBIC
                 ),
                 transforms.RandomHorizontalFlip(0.5),
+                transforms.RandomVerticalFlip(0.5),
+                transforms.RandomRotation(15),
+                transforms.ColorJitter(
+                    brightness=0.1, 
+                    contrast=0.1, 
+                    saturation=0.1
+                ),
                 transforms.Normalize(
                     mean=IMAGENET_DEFAULT_MEAN, std=IMAGENET_DEFAULT_STD
                 ),
