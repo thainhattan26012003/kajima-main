@@ -341,6 +341,14 @@ class Trainer:
         num_batches = len(self.train_dataloader)
         print(f"Total batches: {num_batches}")
 
+        # Early stopping configuration (optional)
+        early_stop_patience = getattr(cfg, "early_stop_patience", None)
+        early_stop_min_epoch = getattr(cfg, "early_stop_min_epoch", 0)
+        use_early_stop = early_stop_patience is not None and early_stop_patience > 0
+        best_metric = -1.0
+        patience = 0
+        best_state = None
+
         for epoch in range(cfg.num_epochs):
             end_time = time.time()
             for batch_idx, batch in enumerate(self.train_dataloader):
@@ -424,8 +432,43 @@ class Trainer:
                         step=n_iter,
                     )
 
+            # Optional early stopping based on evaluation metric
+            if use_early_stop:
+                # Evaluate on the test split to monitor generalization
+                eval_results = self.test(mode="test")
+                current_metric = float(eval_results.get("worst_case_acc", 0.0))
+                if current_metric > best_metric:
+                    best_metric = current_metric
+                    patience = 0
+                    # Keep a copy of the best model weights so far
+                    best_state = {
+                        k: v.detach().cpu().clone() for k, v in self.model.state_dict().items()
+                    }
+                    print(
+                        f"[EarlyStopping] New best metric={best_metric * 100:.2f}% "
+                        f"at epoch {epoch + 1}"
+                    )
+                else:
+                    patience += 1
+                    print(
+                        f"[EarlyStopping] No improvement in metric for {patience} "
+                        f"epoch(s). Best so far={best_metric * 100:.2f}%"
+                    )
+
+                if (epoch + 1) >= early_stop_min_epoch and patience >= early_stop_patience:
+                    print(
+                        f"[EarlyStopping] Stop training at epoch {epoch + 1}. "
+                        f"Best metric={best_metric * 100:.2f}%"
+                    )
+                    break
+
             self.scheduler.step()
             torch.cuda.empty_cache()
+
+        # Restore the best model weights before finishing training
+        if use_early_stop and best_state is not None:
+            print("[EarlyStopping] Loading best model weights before exiting training.")
+            self.model.load_state_dict(best_state)
         print("Finish training")
         elapsed_time = time.time() - start_time
         print(f"Total training time: {elapsed_time:.2f} seconds")
