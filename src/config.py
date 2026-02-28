@@ -22,7 +22,7 @@ class ModelConfig(BaseModel):
 class PeftTrainingConfig(BaseModel):
     batch_size: int = 8
     criterion_type: Literal["CBL", "LA", "focal", "CE", "LADE"]
-    weight: list[float] = [1.0] * 4
+    weight: list[float] = [1.0] * 4  # class weights cho loss (CE, focal) và cho WeightedSampler
     init_head: Literal["class_mean", "no"]
     lora_initialization_strategy: Literal["dora", "random", "rslora"]
     lora_rank: int = 16
@@ -35,7 +35,7 @@ class PeftTrainingConfig(BaseModel):
     optimizer: Literal["adam", "lion", "adamw", "sgd"] = "adam"
     momentum: float = 0.0  # used when optimizer == "sgd"
     print_freq: int = 1
-    sampler: Literal["down_sampler", "class_aware_sampler", "random_sampler", ""] = "class_aware_sampler"
+    sampler: Literal["down_sampler", "class_aware_sampler", "weighted_sampler", "random_sampler", ""] = "class_aware_sampler"
     seed: int = 32
     weight_decay: float = 0.0
 

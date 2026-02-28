@@ -17,7 +17,7 @@ from src.data.transforms import (
     IMAGENET_DEFAULT_STD,
     MaybeToTensor,
 )
-from src.data.samplers import DownSampler, ClassAwareSampler
+from src.data.samplers import DownSampler, ClassAwareSampler, WeightedSampler
 from src.utils import (
     Evaluator,
     FocalLoss,
@@ -166,6 +166,7 @@ class Trainer:
             drop_last=False,
             persistent_workers=True,
             collate_fn=None,
+            weights_config=getattr(cfg, "weight", None),
         )
 
         self.test_dataloader = self._make_data_loader(
@@ -190,9 +191,11 @@ class Trainer:
         drop_last: bool = False,
         persistent_workers: bool = False,
         collate_fn: Optional[Callable[[List[T]], Any]] = None,
+        weights_config: Optional[List[float]] = None,
     ):
         """
         Creates a data loader with the specified parameters.
+        weights_config: list trọng số theo class cho WeightedSampler (từ config.weight).
         """
 
         if sampler == "class_aware_sampler":
@@ -201,6 +204,9 @@ class Trainer:
         elif sampler == "down_sampler":
             print("Using down sampler")
             sampler = DownSampler(dataset, n_max=4)
+        elif sampler == "weighted_sampler":
+            print("Using weighted sampler", "with config weights" if weights_config else "(auto inverse frequency)")
+            sampler = WeightedSampler(dataset, weights_config=weights_config)
         else:
             sampler = None
 
