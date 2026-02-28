@@ -21,7 +21,7 @@
       "num_layer_finetuned": 12,
       "num_workers": 4,
       "optimizer": "adamw",
-      "sampler": "random",
+      "sampler": "random_sampler",
       "seed": 32,
       "weight_decay": 0.05
     },
