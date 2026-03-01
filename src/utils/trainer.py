@@ -295,46 +295,60 @@ class Trainer:
     @torch.no_grad()
     def init_head_class_mean(self):
         print("Initialize head with class mean")
-        with self.model.disable_adapter():
-            self.model.eval()
+        is_resnet = hasattr(self.model, "backbone")
+        self.model.eval()
 
-            all_features = []
-            all_labels = []
+        all_features = []
+        all_labels = []
+        if is_resnet:
             for batch_idx, batch in enumerate(self.init_train_dataloader):
                 images = batch[0]
                 labels = batch[1]
                 images = images.to(self.device)
-
                 inputs = self.plain_image_processor(images, return_tensors="pt").to(
                     self.device
                 )
-                outputs = self.model.vit_model(**inputs)
-
-                features = outputs.pooler_output
+                features = self.model.backbone(inputs.pixel_values)
                 all_features.append(features)
                 all_labels.append(labels)
+        else:
+            with self.model.disable_adapter():
+                for batch_idx, batch in enumerate(self.init_train_dataloader):
+                    images = batch[0]
+                    labels = batch[1]
+                    images = images.to(self.device)
+                    inputs = self.plain_image_processor(images, return_tensors="pt").to(
+                        self.device
+                    )
+                    outputs = self.model.vit_model(**inputs)
+                    features = outputs.pooler_output
+                    all_features.append(features)
+                    all_labels.append(labels)
 
-            all_features = torch.cat(all_features, dim=0)
-            all_labels = torch.cat(all_labels, dim=0)
+        all_features = torch.cat(all_features, dim=0)
+        all_labels = torch.cat(all_labels, dim=0)
 
-            sorted_index = all_labels.argsort()
-            all_features = all_features[sorted_index]
-            all_labels = all_labels[sorted_index]
+        sorted_index = all_labels.argsort()
+        all_features = all_features[sorted_index]
+        all_labels = all_labels[sorted_index]
 
-            unique_labels, counts = torch.unique(all_labels, return_counts=True)
+        unique_labels, counts = torch.unique(all_labels, return_counts=True)
 
-            class_means = [None] * self.num_classes
-            idx = 0
-            for label, count in zip(unique_labels, counts):
-                class_means[label] = all_features[idx : idx + count].mean(
-                    dim=0, keepdim=True
-                )
-                idx += count
+        class_means = [None] * self.num_classes
+        idx = 0
+        for label, count in zip(unique_labels, counts):
+            class_means[label] = all_features[idx : idx + count].mean(
+                dim=0, keepdim=True
+            )
+            idx += count
 
-            class_means = torch.cat(class_means, dim=0)
-            print(class_means.shape)
-            class_means = F.normalize(class_means, dim=-1)
+        class_means = torch.cat(class_means, dim=0)
+        print(class_means.shape)
+        class_means = F.normalize(class_means, dim=-1)
 
+        if is_resnet:
+            self.model.head.apply_weight(class_means)
+        else:
             self.model.head.modules_to_save.default.apply_weight(class_means)
 
     def train(self):
@@ -513,9 +527,27 @@ class Trainer:
         return results
 
     def save_model(self, output_dir):
-        self.model.save_pretrained(output_dir)
-        self.plain_image_processor.save_pretrained(output_dir)
+        if hasattr(self.model, "save_pretrained"):
+            self.model.save_pretrained(output_dir)
+            self.plain_image_processor.save_pretrained(output_dir)
+        else:
+            import os
+            os.makedirs(output_dir, exist_ok=True)
+            torch.save(self.model.state_dict(), os.path.join(output_dir, "pytorch_model.bin"))
+            if hasattr(self.plain_image_processor, "save_pretrained"):
+                self.plain_image_processor.save_pretrained(output_dir)
 
     def load_model(self, model_dir):
-        self.model.from_pretrained(model_dir)
-        self.plain_image_processor.from_pretrained(model_dir)
+        if hasattr(self.model, "from_pretrained"):
+            self.model.from_pretrained(model_dir)
+            self.plain_image_processor.from_pretrained(model_dir)
+        else:
+            import os
+            path = os.path.join(model_dir, "pytorch_model.bin")
+            if os.path.exists(path):
+                self.model.load_state_dict(
+                    torch.load(path, map_location=self.device, weights_only=True),
+                    strict=False,
+                )
+            if hasattr(self.plain_image_processor, "from_pretrained"):
+                self.plain_image_processor.from_pretrained(model_dir)

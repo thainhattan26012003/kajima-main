@@ -19,15 +19,20 @@ def train(
 ):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir, exist_ok=True)
-    model, processor = get_model(configuration, device=device, test_mode=False)
+    result = get_model(configuration, device=device, test_mode=False)
+    model = result[0]
+    processor = result[1]
+    plain_image_processor = (
+        result[2]
+        if len(result) == 3
+        else AutoImageProcessor.from_pretrained(configuration.model.model_path)
+    )
     method = configuration.model.method
     if method == "tuning":
         trainer = Trainer(
             cfg=configuration.peft_training,
             model=model,
-            plain_image_processor=AutoImageProcessor.from_pretrained(
-                configuration.model.model_path
-            ),
+            plain_image_processor=plain_image_processor,
             device=device,
             dataset_dir=configuration.data.train_dataset_dir,
             test_dataset_dir=configuration.data.test_dataset_dir,

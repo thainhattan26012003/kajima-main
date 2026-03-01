@@ -9,6 +9,12 @@ from src.model import (
     create_lora_vit_model,
 )
 from src.model.utils import get_target_modules
+from src.model.resnet101 import (
+    ResNet101Classifier,
+    ResNetImageProcessor,
+    RESNET_DEFAULT_SIZE,
+    RESNET_DEFAULT_CROP,
+)
 from peft import PeftModel
 from pathlib import Path
 import torch
@@ -27,6 +33,7 @@ def get_model(configuration: Config, device: str = "cpu", test_mode: bool = True
     if (
         test_mode
         and configuration.model.method == "tuning"
+        and configuration.model.model_name != "resnet101"
         and not os.path.exists(configuration.model.peft_adapter_path)
     ):
         raise ValueError(
@@ -42,6 +49,44 @@ def get_model(configuration: Config, device: str = "cpu", test_mode: bool = True
             if Path(configuration.model.feature_matrix_path).suffix != ".pt":
                 raise ValueError("Feature matrix should be a .pt file.")
     if configuration.model.method == "tuning":
+        if configuration.model.model_name == "resnet101":
+            # ResNet101 path: no PEFT, full fine-tuning
+            pretrained_path = None
+            if configuration.model.model_path and os.path.isfile(configuration.model.model_path):
+                pretrained_path = configuration.model.model_path
+            model = ResNet101Classifier(
+                num_classes=configuration.data.num_classes,
+                classifier_type=configuration.model.classifier_head,
+                pretrained_path=pretrained_path,
+            )
+            if test_mode and configuration.model.peft_adapter_path and os.path.isdir(configuration.model.peft_adapter_path):
+                ckpt = None
+                for name in ("pytorch_model.bin", "model.pt", "model.pth"):
+                    p = Path(configuration.model.peft_adapter_path) / name
+                    if p.exists():
+                        ckpt = p
+                        break
+                if ckpt is None:
+                    for f in Path(configuration.model.peft_adapter_path).iterdir():
+                        if f.suffix in (".pt", ".pth", ".bin"):
+                            ckpt = f
+                            break
+                if ckpt and ckpt.exists():
+                    state = torch.load(str(ckpt), map_location="cpu", weights_only=True)
+                    if isinstance(state, dict) and "state_dict" in state:
+                        state = state["state_dict"]
+                    if isinstance(state, dict):
+                        model.load_state_dict(state, strict=False)
+            resize = getattr(configuration.inference, "resize_size", 256) if configuration.inference else 256
+            crop = getattr(configuration.inference, "crop_size", RESNET_DEFAULT_CROP) if configuration.inference else RESNET_DEFAULT_CROP
+            image_transforms = make_classification_eval_transform(
+                crop_size=crop,
+                resize_size=resize,
+            )
+            resnet_processor = ResNetImageProcessor(resize=resize, crop_size=crop)
+            model.to(device)
+            return model, image_transforms, resnet_processor
+
         base_model = AutoModel.from_pretrained(
             configuration.model.model_path, local_files_only=True
         )
