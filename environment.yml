@@ -31,6 +31,7 @@ dependencies:
     - aws-lambda-powertools>=3.8.0
 
     # Vision / ML
+    - scikit-learn>=1.6.0
     - opencv-python>=4.5.0
     - transformers>=4.47.0,<4.48.0
     - peft>=0.14.0
