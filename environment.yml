@@ -18,6 +18,9 @@ dependencies:
   - cuda-toolkit
   - cuda-nvcc
 
+  # PIL/Pillow + libtiff (fix libtiff.so.5 on Linux; conda Pillow links to conda libtiff)
+  - libtiff
+  - pillow
 
   - pip:
     # Web / API
