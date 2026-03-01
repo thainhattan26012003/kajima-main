@@ -8,10 +8,15 @@ dependencies:
   - python=3.10
   - pip
   - numpy>=2.2.0
-  - pytorch::pytorch=2.6.0
-  - pytorch::torchvision=0.21.0
-  - pytorch::pytorch-cuda=12.4
-  - nvidia::cuda-toolkit
+  
+  # Thư viện chính cho GPU
+  - pytorch
+  - torchvision
+  - pytorch-cuda=12.4
+  
+  # Driver hỗ trợ
+  - cuda-toolkit
+  - cuda-nvcc
 
 
   - pip:
