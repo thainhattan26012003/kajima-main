@@ -3,7 +3,7 @@
       "method": "tuning",
       "model_name": "dinov2_base",
       "model_path": "checkpoints/dinov2-base",
-      "peft_adapter_path": "checkpoints/dinov2-option-a",
+      "peft_adapter_path": "checkpoints/test",
       "classifier_head": "cosine"
     },
     "training": {
