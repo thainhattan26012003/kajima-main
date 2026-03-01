@@ -123,6 +123,11 @@ def main():
         action="store_true",
         help="Chỉ in kế hoạch, không copy file",
     )
+    parser.add_argument(
+        "--list-structure",
+        action="store_true",
+        help="In cấu trúc thư mục nguồn (vài date đầu) rồi thoát, để kiểm tra tên class",
+    )
     args = parser.parse_args()
 
     root = Path(args.source)
@@ -137,6 +142,26 @@ def main():
     if not date_folders:
         print(f"Không tìm thấy thư mục date (tên toàn số) trong {root}")
         return 1
+
+    if args.list_structure:
+        print("Cấu trúc thư mục nguồn (script chỉ copy khi tên class khớp 7-1_, 7-2_, 6-1_, 7-4_ hoặc 試料7-1,...):\n")
+        for date in date_folders[:5]:
+            p = root / date
+            subdirs = [d.name for d in p.iterdir() if d.is_dir() and not d.name.startswith(".")]
+            files_in_first = []
+            if subdirs:
+                first_sub = p / subdirs[0]
+                files_in_first = [f.name for f in first_sub.iterdir() if f.is_file()][:3]
+            print(f"  {date}/")
+            for s in subdirs[:8]:
+                print(f"    {s}/")
+            if len(subdirs) > 8:
+                print(f"    ... và {len(subdirs) - 8} thư mục khác")
+            if subdirs and files_in_first:
+                print(f"    (ví dụ file trong {subdirs[0]}: {files_in_first})")
+            print()
+        print("Nếu tên thư mục class không giống 7-1_..., 7-2_..., cần thêm mapping trong script (FOLDER_MAP_PREFIX / FOLDER_MAP_EXACT).")
+        return 0
 
     if args.test_dates:
         test_dates_set = set(args.test_dates)
@@ -176,6 +201,10 @@ def main():
 
     print(f"\nTrain: {total_train} ảnh trong {len(train_dates)} date")
     print(f"Test:  {total_test} ảnh trong {len(test_dates)} date")
+    if total_train == 0 and total_test == 0:
+        print("\n⚠️  Không copy được ảnh nào. Tên thư mục class có thể không khớp mapping.")
+        print("   Chạy với --list-structure để xem cấu trúc thực tế:")
+        print("   python scripts/split_train_test_1.py --list-structure")
     if not args.dry_run:
         print(f"\nĐã tạo:\n  {train_dir}\n  {test_dir}")
         print("\nCập nhật config với:")
