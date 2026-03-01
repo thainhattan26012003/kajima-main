@@ -1,0 +1,48 @@
+name: kajima-construction-gpu
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+  - defaults
+dependencies:
+  - python>=3.10,<4.0
+  - pip
+
+  # Core
+  - numpy>=2.2.0
+  - matplotlib>=3.4.0
+  - pandas>=2.2.0
+  - scikit-learn>=1.6.0
+
+  # PyTorch GPU (Sử dụng CUDA 12.1)
+  - pytorch::pytorch=2.6.0
+  - pytorch::torchvision=0.21.0
+  - pytorch::pytorch-cuda=12.1
+  - nvidia::cuda-nvcc  # Cần thiết nếu bạn compile thêm custom kernels
+
+  - pip:
+    # Web / API
+    - gradio>=5.20.0
+    - fastapi>0.115.0
+    - mangum>=0.19.0
+    - pydantic>=2.10.6
+
+    # AWS
+    - boto3>=1.37.0
+    - aws-lambda-powertools>=3.8.0
+
+    # Vision / ML
+    - opencv-python>=4.5.0
+    - transformers>=4.47.0,<4.48.0
+    - peft>=0.14.0
+
+    # Auth / utils
+    - python-jose>=3.4.0,<4.0.0
+
+    # Logging / experiment
+    - wandb>=0.19.0
+
+    # Dev / Tools
+    - pytest>=8.3.0
+    - black>=25.1.0
+    - jupyterlab>=4.3.0
