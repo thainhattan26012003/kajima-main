@@ -16,20 +16,29 @@ class FocalLoss(nn.Module):
         super().__init__()
         assert gamma >= 0
         self.gamma = gamma
-        # Ensure weight is a Tensor if it is passed in
+        
+        # Xử lý mảng weight từ config JSON thành Tensor
+        if weight is not None:
+            if not isinstance(weight, torch.Tensor):
+                weight = torch.tensor(weight, dtype=torch.float32)
         self.register_buffer('weight', weight) 
 
     def forward(self, logit, target):
-        # Step 1: Calculate Cross Entropy with weight (weight)
-        # log_p = -CE
-        ce_loss = F.cross_entropy(logit, target, reduction="none", weight=self.weight)
+        # Step 1: Tính Cross Entropy KHÔNG CÓ weight để lấy đúng p_t
+        ce_loss_unweighted = F.cross_entropy(logit, target, reduction="none")
         
-        # Step 2: Calculate probability p_t to calculate the component (1-p_t)^gamma
-        pt = torch.exp(-ce_loss) 
+        # Step 2: Tính xác suất p_t = exp(-CE)
+        pt = torch.exp(-ce_loss_unweighted) 
         
-        # Step 3: Calculate Focal Loss according to the formula: Loss = weight * (1-pt)^gamma * CE
-        focal_loss = (1 - pt) ** self.gamma * ce_loss
+        # Step 3: Tính Focal Loss cơ bản: (1 - p_t)^gamma * CE
+        focal_loss = (1 - pt) ** self.gamma * ce_loss_unweighted
         
+        # Step 4: Nhân với class weights (alpha) nếu có
+        if self.weight is not None:
+            # Lấy weight tương ứng với class của từng sample trong batch
+            alpha = self.weight[target]
+            focal_loss = focal_loss * alpha
+            
         return focal_loss.mean()
 
 
