@@ -1,28 +1,33 @@
 {
-    "model": {
-      "method": "tuning",
-      "model_name": "dinov2_base",
-      "model_path": "checkpoints/dinov2-base",
-      "peft_adapter_path": "checkpoints/test",
-      "classifier_head": "cosine"
-    },
-    "training": {
-      "batch_size": 8,
-      "weight": [0.9030733, 0.9385749, 1.2545156, 0.97077507],
-      "criterion_type": "CE",
-      "lr": 0.0001,
-      "early_stop_patience": 20,
-      "num_epochs": 100,
-      "optimizer": "adam",
-      "num_workers": 4
-    },
-
-    "testing": { "batch_size": 16 },
-    "inference": { "crop_size": 518, "resolution": 518 },
-    "data": {
-      "train_dataset_dir": "datasets/kajima_dataset",
-      "test_dataset_dir": "datasets/kajima_test_dataset",
-      "num_classes": 4
-    }
+  "model": {
+    "method": "tuning",
+    "model_name": "dinov2_base",
+    "model_path": "checkpoints/dinov2-base",
+    "peft_adapter_path": "checkpoints/test",
+    "classifier_head": "cosine"
+  },
+  "training": {
+    "batch_size": 8,
+    "weight": [0.9030733, 0.9385749, 1.2545156, 0.97077507],
+    "criterion_type": "CE",
+    "init_head": "class_mean",
+    "lora_initialization_strategy": "random",
+    "lr": 0.0001,
+    "early_stop_patience": 20,
+    "num_epochs": 100,
+    "optimizer": "adam",
+    "num_workers": 4
+  },
+  "testing": {
+    "batch_size": 16
+  },
+  "inference": {
+    "crop_size": 518,
+    "resolution": 518
+  },
+  "data": {
+    "train_dataset_dir": "datasets/kajima_dataset",
+    "test_dataset_dir": "datasets/kajima_test_dataset",
+    "num_classes": 4
   }
-  
+}
