@@ -161,18 +161,31 @@ class ResNetImageProcessor:
 
         if not isinstance(images, (list, tuple)):
             images = [images]
-        from src.data.transforms import MaybeToTensor
-        from transformers.image_transforms import rescale
 
-        RESCALE = 0.00392156862745098
-        t = T.Compose([
-            T.Lambda(lambda img: rescale(img, RESCALE)),
-            MaybeToTensor(),
-            T.Resize(self._resize, interpolation=T.InterpolationMode.BICUBIC),
-            T.CenterCrop(self._crop_size),
-            T.Normalize(mean=IMAGENET_DEFAULT_MEAN, std=IMAGENET_DEFAULT_STD),
-        ])
-        tensors = [t(img) for img in images]
+        def _to_tensor(img):
+            if isinstance(img, torch.Tensor):
+                x = img.float()
+                if x.max() > 1.0:
+                    x = x / 255.0
+                t_tensor = T.Compose([
+                    T.Resize(self._resize, interpolation=T.InterpolationMode.BICUBIC),
+                    T.CenterCrop(self._crop_size),
+                    T.Normalize(mean=IMAGENET_DEFAULT_MEAN, std=IMAGENET_DEFAULT_STD),
+                ])
+                return t_tensor(x)
+            from src.data.transforms import MaybeToTensor
+            from transformers.image_transforms import rescale
+            RESCALE = 0.00392156862745098
+            t_pil = T.Compose([
+                T.Lambda(lambda i: rescale(i, RESCALE)),
+                MaybeToTensor(),
+                T.Resize(self._resize, interpolation=T.InterpolationMode.BICUBIC),
+                T.CenterCrop(self._crop_size),
+                T.Normalize(mean=IMAGENET_DEFAULT_MEAN, std=IMAGENET_DEFAULT_STD),
+            ])
+            return t_pil(img)
+
+        tensors = [_to_tensor(img) for img in images]
         pixel_values = torch.stack(tensors)
 
         class _ProcessorOutput:
