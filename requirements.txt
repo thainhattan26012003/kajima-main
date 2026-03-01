@@ -1,0 +1,32 @@
+# --- Core ML & GPU Support ---
+# Lưu ý: Cài đặt torch theo lệnh index-url bên dưới để có CUDA 12.4
+--extra-index-url https://download.pytorch.org/whl/cu124
+torch
+torchvision
+numpy>=2.2.0
+
+# --- Vision / ML ---
+scikit-learn>=1.6.0
+opencv-python>=4.5.0
+transformers>=4.47.0,<4.48.0
+peft>=0.14.0
+Pillow
+
+# --- Web / API ---
+gradio>=5.20.0
+fastapi>0.115.0
+mangum>=0.19.0
+pydantic>=2.10.6
+
+# --- AWS Stack ---
+boto3>=1.37.0
+aws-lambda-powertools>=3.8.0
+
+# --- Auth & Utils ---
+python-jose[cryptography]>=3.4.0,<4.0.0
+wandb>=0.19.0
+
+# --- Dev / Tools ---
+pytest>=8.3.0
+black>=25.1.0
+jupyterlab>=4.3.0
