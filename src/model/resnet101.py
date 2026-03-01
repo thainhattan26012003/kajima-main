@@ -110,6 +110,7 @@ class ResNet101Classifier(nn.Module):
         num_classes: int,
         classifier_type: str = "linear",
         pretrained_path: str | None = None,
+        freeze_backbone: bool = False,
         dtype=None,
     ):
         super().__init__()
@@ -119,6 +120,10 @@ class ResNet101Classifier(nn.Module):
             if "state_dict" in state:
                 state = state["state_dict"]
             self.backbone.load_state_dict(state, strict=False)
+
+        if freeze_backbone:
+            for p in self.backbone.parameters():
+                p.requires_grad = False
 
         if classifier_type == "linear":
             self.head = LinearClassifierHead(RESNET101_FEATURE_DIM, num_classes, dtype)
@@ -159,9 +164,6 @@ class ResNetImageProcessor:
         import torchvision.transforms as T
         from src.data.transforms import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
 
-        if not isinstance(images, (list, tuple)):
-            images = [images]
-
         def _to_tensor(img):
             if isinstance(img, torch.Tensor):
                 x = img.float()
@@ -185,8 +187,14 @@ class ResNetImageProcessor:
             ])
             return t_pil(img)
 
-        tensors = [_to_tensor(img) for img in images]
-        pixel_values = torch.stack(tensors)
+        # Batch tensor (B, C, H, W): process as single batch, do not wrap in list (would create wrong 5D shape)
+        if isinstance(images, torch.Tensor) and images.dim() == 4:
+            pixel_values = _to_tensor(images)
+        else:
+            if not isinstance(images, (list, tuple)):
+                images = [images]
+            tensors = [_to_tensor(img) for img in images]
+            pixel_values = torch.stack(tensors)
 
         class _ProcessorOutput:
             def __init__(self, pv):

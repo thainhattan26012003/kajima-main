@@ -58,6 +58,7 @@ def get_model(configuration: Config, device: str = "cpu", test_mode: bool = True
                 num_classes=configuration.data.num_classes,
                 classifier_type=configuration.model.classifier_head,
                 pretrained_path=pretrained_path,
+                freeze_backbone=getattr(configuration.model, "freeze_backbone", False),
             )
             if test_mode and configuration.model.peft_adapter_path and os.path.isdir(configuration.model.peft_adapter_path):
                 ckpt = None
@@ -77,8 +78,11 @@ def get_model(configuration: Config, device: str = "cpu", test_mode: bool = True
                         state = state["state_dict"]
                     if isinstance(state, dict):
                         model.load_state_dict(state, strict=False)
-            resize = getattr(configuration.inference, "resize_size", 256) if configuration.inference else 256
-            crop = getattr(configuration.inference, "crop_size", RESNET_DEFAULT_CROP) if configuration.inference else RESNET_DEFAULT_CROP
+            if configuration.inference:
+                crop = configuration.inference.crop_size
+                resize = getattr(configuration.inference, "resize_size", configuration.inference.resolution)
+            else:
+                resize, crop = 256, RESNET_DEFAULT_CROP
             image_transforms = make_classification_eval_transform(
                 crop_size=crop,
                 resize_size=resize,

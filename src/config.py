@@ -17,6 +17,7 @@ class ModelConfig(BaseModel):
     feature_matrix_path: str | None = None
     peft_adapter_path: str | None = None
     classifier_head: Literal["cosine", "linear", "layernorm", "l2norm"] = "cosine"
+    freeze_backbone: bool = False  # Chỉ dùng cho ResNet: True = đóng băng backbone, chỉ train head
 
 
 class PeftTrainingConfig(BaseModel):

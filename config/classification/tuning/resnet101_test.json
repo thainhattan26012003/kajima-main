@@ -4,7 +4,8 @@
     "model_name": "resnet101",
     "model_path": "checkpoints/resnet101",
     "peft_adapter_path": "checkpoints/resnet101-run",
-    "classifier_head": "cosine"
+    "classifier_head": "cosine",
+    "freeze_backbone": false
   },
   "training": {
     "batch_size": 4,
