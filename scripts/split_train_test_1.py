@@ -152,7 +152,7 @@ def main():
         return 1
 
     if args.list_structure:
-        print("Cấu trúc thư mục nguồn (script chỉ copy khi tên class khớp 7-1_, 7-2_, 6-1_, 7-4_ hoặc 試料7-1,...):\n")
+        print("Cấu trúc thư mục nguồn (script copy khi tên class khớp 7-1-*, 7-2-*, 7-4-*, 7-1_*, ... hoặc 試料7-1, 試料7-2, 試料6-1, 試料7-4):\n")
         for date in date_folders[:5]:
             p = root / date
             subdirs = [d.name for d in p.iterdir() if d.is_dir() and not d.name.startswith(".")]
@@ -168,7 +168,7 @@ def main():
             if subdirs and files_in_first:
                 print(f"    (ví dụ file trong {subdirs[0]}: {files_in_first})")
             print()
-        print("Nếu tên thư mục class không giống 7-1_..., 7-2_..., cần thêm mapping trong script (FOLDER_MAP_PREFIX / FOLDER_MAP_EXACT).")
+        print("Nếu tên thư mục class không khớp (7-x-<date>, 7-x_*, 試料7-x), thêm mapping trong FOLDER_MAP_PREFIX / FOLDER_MAP_EXACT.")
         return 0
 
     if args.test_dates:
