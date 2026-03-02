@@ -4,15 +4,19 @@ Chia thư mục datasets thành train và test, đồng thời đổi tên thư 
 sang format mà KajimaDataset yêu cầu: 7-<class>-<date>.
 
 Cấu trúc nguồn mong đợi:
-  <source>/250123/7-1_20250123/IMG_0027.jpg ...
-  <source>/250123/7-2_20250123/...
-  (hoặc format cũ: 試料7-1, 試料7-2, 試料6-1, 試料7-4)
+  <source>/251003/7-1-251003/IMG_0027.jpg ...
+  <source>/251003/7-2-251003/...
+  <source>/251003/試料7-1/...
+  (có thể trộn: vừa 7-x-<date> vừa 試料7-x trong cùng một date)
+
+  Lưu ý: --source phải là thư mục CHA của các thư mục date (tên toàn số),
+  VD: ~/Downloads/写真1-backup (chứa 251003), không phải .../写真1-backup/251003.
 
 Mapping:
-  7-1_* hoặc 試料7-1 → 7-1-<date>  (class 1)
-  7-2_* hoặc 試料7-2 → 7-2-<date>  (class 2)
-  7-3_* hoặc 6-1_* hoặc 試料6-1 → 7-3-<date>  (class 3)
-  7-4_* hoặc 試料7-4 → 7-4-<date>  (class 4)
+  7-1-*, 7-1_* hoặc 試料7-1 → 7-1-<date>  (class 1)
+  7-2-*, 7-2_* hoặc 試料7-2 → 7-2-<date>  (class 2)
+  7-3-*, 6-1-*, 6-1_* hoặc 試料6-1 → 7-3-<date>  (class 3)
+  7-4-*, 7-4_* hoặc 試料7-4 → 7-4-<date>  (class 4)
 
 Cách chạy:
   poetry run python scripts/split_train_test.py --source /path/to/image_kajima
