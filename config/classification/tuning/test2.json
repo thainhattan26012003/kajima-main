@@ -1,0 +1,38 @@
+{
+    "model": {
+      "method": "tuning",
+      "model_name": "dinov2_base",
+      "model_path": "checkpoints/dinov2-base",
+      "peft_adapter_path": "checkpoints/test2",
+      "classifier_head": "linear"
+    },
+    "training": {
+      "batch_size": 64,
+      "criterion_type": "LA",
+      "init_head": "class_mean",
+      "lora_initialization_strategy": "default",
+      "lora_rank": 32,
+      "lr": 0.0005,
+      "micro_batch_size": 32,
+      "num_epochs": 40,
+      "num_layer_finetuned": 8,
+      "num_workers": 4,
+      "optimizer": "adamw",
+      "print_freq": 1,
+      "sampler": "random_sampler",
+      "seed": 32,
+      "weight_decay": 0.05
+    },
+    "testing": { 
+      "batch_size": 8 
+    },
+    "inference": { 
+      "crop_size": 224, 
+      "resolution": 256 
+    },
+    "data": {
+      "train_dataset_dir": "datasets/kajima_dataset",
+      "test_dataset_dir": "datasets/kajima_test_dataset",
+      "num_classes": 4
+    }
+  }
