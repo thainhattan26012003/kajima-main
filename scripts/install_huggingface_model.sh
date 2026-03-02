@@ -18,17 +18,17 @@ if [ -z "$HUGGINGFACE_MODEL_PATH" ] || [ -z "$INSTALL_DIRECTORY" ]; then
     usage
 fi
 
-if [ -d "$INSTALL_DIRECTORY"  ]; then
-    echo "Directory $INSTALL_DIRECTORY already exists. Please remove it and try again."
-    exit 1
+if [ -d "$INSTALL_DIRECTORY" ]; then
+    echo "Removing existing $INSTALL_DIRECTORY (re-download)."
+    rm -rf "$INSTALL_DIRECTORY"
 fi
 
-mkdir -p $INSTALL_DIRECTORY
+mkdir -p "$INSTALL_DIRECTORY"
 
 # Download the model
 echo "Downloading the model ${HUGGINGFACE_MODEL_PATH} to ${INSTALL_DIRECTORY} from Hugging Face Hub"
 pip show transformers
-poetry run python -c "
+python -c "
 from transformers import AutoModel, AutoImageProcessor
 
 try:
