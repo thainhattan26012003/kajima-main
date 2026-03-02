@@ -7,7 +7,8 @@ Cấu trúc nguồn mong đợi:
   <source>/251003/7-1-251003/IMG_0027.jpg ...
   <source>/251003/7-2-251003/...
   <source>/251003/試料7-1/...
-  (có thể trộn: vừa 7-x-<date> vừa 試料7-x trong cùng một date)
+  (có thể trộn: vừa 7-x-<date> vừa 試料7-x trong cùng một date).
+  Thư mục class có thể chứa thư mục con (VD: 試料7-1/地山0.3～1m/*.jpg), script sẽ copy đệ quy và làm phẳng tên file.
 
   Lưu ý: --source phải là thư mục CHA của các thư mục date (tên toàn số),
   VD: ~/Downloads/写真1-backup (chứa 251003), không phải .../写真1-backup/251003.
@@ -85,11 +86,15 @@ def copy_tree_with_rename(
         dst_class_dir = dst_date_dir / new_folder_name
         if not dry_run:
             dst_class_dir.mkdir(parents=True, exist_ok=True)
-        for f in src_class_dir.iterdir():
+        # Copy mọi file (kể cả trong thư mục con, VD: 試料7-1/地山0.3～1m/*.jpg)
+        for f in src_class_dir.rglob("*"):
             if f.is_file():
                 count += 1
                 if not dry_run:
-                    shutil.copy2(f, dst_class_dir / f.name)
+                    rel = f.relative_to(src_class_dir)
+                    # Làm phẳng tên để tránh trùng và KajimaDataset chỉ đọc file trực tiếp
+                    flat_name = str(rel).replace("\\", "_").replace("/", "_")
+                    shutil.copy2(f, dst_class_dir / flat_name)
     return count
 
 
