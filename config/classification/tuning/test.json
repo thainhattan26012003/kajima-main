@@ -1,8 +1,8 @@
 {
   "model": {
     "method": "tuning",
-    "model_name": "dinov2_base",
-    "model_path": "checkpoints/dinov2-base",
+    "model_name": "dinov2_small",
+    "model_path": "checkpoints/dinov2-small-imagenet1k-1-layer",
     "peft_adapter_path": "checkpoints/test",
     "classifier_head": "cosine"
   },
