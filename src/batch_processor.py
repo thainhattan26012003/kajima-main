@@ -3,6 +3,7 @@ import torch
 import src.vars as var
 from src.config import Config
 from src.model import get_model
+from src.model import get_model_efficientnet
 from src.utils import get_current_datetime
 from aws_lambda_powertools.logging import Logger
 from src.schema import ImageRecord
@@ -22,16 +23,22 @@ def get_model_and_transform():
     start_time = time.time()
 
     if torch.cuda.is_available():
+        logger.info("CUDA is available")
         device = "cuda:0"
     elif torch.backends.mps.is_available():
         device = "mps:0"
     else:
         device = "cpu"
 
-    config_path = f"{os.environ['LAMBDA_TASK_ROOT']}/{var.MODEL_CONFIG_PATH}"
-    logger.info(f"Using device: {device}. Config path: {config_path}")
-    model_config = Config.from_json(config_path)
-    model, image_transforms = get_model(model_config, device=device, test_mode=True)
+    # config_path = os.getenv("MODEL_CONFIG_PATH")
+    # logger.info(f"Using device: {device}. Config path: {config_path}")
+    # model_config = Config.from_json(config_path)
+    # model, image_transforms = get_model(model_config, device=device, test_mode=True)
+
+    checkpoint_path = var.MODEL_CHECKPOINT_PATH
+    logger.info(f"Using device: {device}. Checkpoint path: {checkpoint_path}")
+
+    model, image_transforms = get_model_efficientnet(checkpoint_path, num_classes=4, device=device)
 
     logger.info(f"Model loaded in {time.time() - start_time:.2f} seconds")
 
@@ -92,7 +99,7 @@ def batch_record_handler(records: list[ImageRecord], record_id: str):
                 for j, image_data in enumerate(image_batchs):
                     try:
                         image = Image.open(BytesIO(image_data)).convert("RGB")
-                        image = np.array(image)
+                        # image = np.array(image)
                         image = image_transforms(image)
                         input_tensors.append(image)
                     except Exception as ex:
@@ -103,19 +110,38 @@ def batch_record_handler(records: list[ImageRecord], record_id: str):
                 inputs = torch.stack(input_tensors).to(device)
                 outputs = model(inputs)
                 for _, output in enumerate(outputs):
+                    
+                    # Get highest confidence 
                     label = torch.argmax(output).item()
                     confidence = torch.softmax(output, dim=0)[label].item()
+                    
+                    # Get details confidence
+                    probs = torch.softmax(output, dim=0)
+                    confidence_map = {
+                        "7-1": str(round(probs[0].item() * 100, 1)),
+                        "7-2": str(round(probs[1].item() * 100, 1)),
+                        "6-1": str(round(probs[2].item() * 100, 1)),
+                        "7-4": str(round(probs[3].item() * 100, 1)),
+                    }
+                    
                     all_predictions.append(
                         {
                             "label": str(label + 1),
                             "confidence": confidence,
+                            "confidence_map": confidence_map,
                         }
                     )
 
         update_kintone_key(
             record_id=record_id,
             update_key=var.KINTONE_UPDATE_FIELD_CODE,
-            update_value=",".join([f"7-{prediction['label']}" for prediction in all_predictions]),
+            update_value={
+                var.KINTONE_UPDATE_FIELD_CODE: ",".join([("6-1" if prediction["label"] == "3" else f"7-{prediction['label']}") for prediction in all_predictions]),
+                var.KINTONE_UPDATE_FIELD_SCORE_61: ",".join(p["confidence_map"]["6-1"] for p in all_predictions),
+                var.KINTONE_UPDATE_FIELD_SCORE_71: ",".join(p["confidence_map"]["7-1"] for p in all_predictions),
+                var.KINTONE_UPDATE_FIELD_SCORE_72: ",".join(p["confidence_map"]["7-2"] for p in all_predictions),
+                var.KINTONE_UPDATE_FIELD_SCORE_74: ",".join(p["confidence_map"]["7-4"] for p in all_predictions),
+            }
         )
         # Store result
         processed_idx = []
@@ -125,7 +151,8 @@ def batch_record_handler(records: list[ImageRecord], record_id: str):
             img_data = image_datas[i]
             try:
                 # Store prediction in output S3 bucket
-                output_key = f"{record.image_id}_{record.user_id}_{record.record_id}_{get_current_datetime()}_7-{prediction['label']}"
+                mapped_label = ("6-1" if prediction["label"] == "3" else f"7-{prediction['label']}")
+                output_key = f"{record.image_id}_{record.user_id}_{record.record_id}_{get_current_datetime()}_{mapped_label}"
                 logger.info(
                     f"Storing processed image to S3: {var.S3_BUCKET_NAME}/{output_key}"
                 )

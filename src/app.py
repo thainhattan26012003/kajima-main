@@ -1,8 +1,7 @@
 import gradio as gr
 import torch
 from PIL import Image
-from src.config import Config
-from src.model import get_model
+from src.model import get_model,get_model_efficientnet
 import numpy as np
 import src.vars as var
 
@@ -14,8 +13,11 @@ def get_model_and_transform():
         device = "mps:0"
     else:
         device = "cpu"
-    model_config = Config.from_json(var.MODEL_CONFIG_PATH)
-    model, image_transforms = get_model(model_config, device=device, test_mode=True)
+    checkpoint_path = var.MODEL_CHECKPOINT_PATH
+    model, image_transforms = get_model_efficientnet(
+        checkpoint_path=checkpoint_path,
+        device=device,
+    )
     return model, image_transforms, device
 
 

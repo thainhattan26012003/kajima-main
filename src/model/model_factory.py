@@ -9,16 +9,14 @@ from src.model import (
     create_lora_vit_model,
 )
 from src.model.utils import get_target_modules
-from src.model.resnet101 import (
-    ResNet101Classifier,
-    ResNetImageProcessor,
-    RESNET_DEFAULT_SIZE,
-    RESNET_DEFAULT_CROP,
-)
 from peft import PeftModel
 from pathlib import Path
 import torch
+import torch.nn as nn
+from torchvision.models import efficientnet_b0
 import os
+
+
 
 
 def get_model(configuration: Config, device: str = "cpu", test_mode: bool = True):
@@ -33,7 +31,6 @@ def get_model(configuration: Config, device: str = "cpu", test_mode: bool = True
     if (
         test_mode
         and configuration.model.method == "tuning"
-        and configuration.model.model_name != "resnet101"
         and not os.path.exists(configuration.model.peft_adapter_path)
     ):
         raise ValueError(
@@ -49,48 +46,6 @@ def get_model(configuration: Config, device: str = "cpu", test_mode: bool = True
             if Path(configuration.model.feature_matrix_path).suffix != ".pt":
                 raise ValueError("Feature matrix should be a .pt file.")
     if configuration.model.method == "tuning":
-        if configuration.model.model_name == "resnet101":
-            # ResNet101 path: no PEFT, full fine-tuning
-            pretrained_path = None
-            if configuration.model.model_path and os.path.isfile(configuration.model.model_path):
-                pretrained_path = configuration.model.model_path
-            model = ResNet101Classifier(
-                num_classes=configuration.data.num_classes,
-                classifier_type=configuration.model.classifier_head,
-                pretrained_path=pretrained_path,
-                freeze_backbone=getattr(configuration.model, "freeze_backbone", False),
-            )
-            if test_mode and configuration.model.peft_adapter_path and os.path.isdir(configuration.model.peft_adapter_path):
-                ckpt = None
-                for name in ("pytorch_model.bin", "model.pt", "model.pth"):
-                    p = Path(configuration.model.peft_adapter_path) / name
-                    if p.exists():
-                        ckpt = p
-                        break
-                if ckpt is None:
-                    for f in Path(configuration.model.peft_adapter_path).iterdir():
-                        if f.suffix in (".pt", ".pth", ".bin"):
-                            ckpt = f
-                            break
-                if ckpt and ckpt.exists():
-                    state = torch.load(str(ckpt), map_location="cpu", weights_only=True)
-                    if isinstance(state, dict) and "state_dict" in state:
-                        state = state["state_dict"]
-                    if isinstance(state, dict):
-                        model.load_state_dict(state, strict=False)
-            if configuration.inference:
-                crop = configuration.inference.crop_size
-                resize = getattr(configuration.inference, "resize_size", configuration.inference.resolution)
-            else:
-                resize, crop = 256, RESNET_DEFAULT_CROP
-            image_transforms = make_classification_eval_transform(
-                crop_size=crop,
-                resize_size=resize,
-            )
-            resnet_processor = ResNetImageProcessor(resize=resize, crop_size=crop)
-            model.to(device)
-            return model, image_transforms, resnet_processor
-
         base_model = AutoModel.from_pretrained(
             configuration.model.model_path, local_files_only=True
         )
@@ -111,7 +66,6 @@ def get_model(configuration: Config, device: str = "cpu", test_mode: bool = True
             model = create_lora_vit_model(
                 vit_classifier,
                 lora_rank=configuration.peft_training.lora_rank,
-                lora_alpha=configuration.peft_training.lora_alpha,
                 lora_initialization_strategy=configuration.peft_training.lora_initialization_strategy,
                 lora_target_modules=get_target_modules(
                     vit_classifier, configuration.peft_training.num_layer_finetuned
@@ -149,5 +103,46 @@ def get_model(configuration: Config, device: str = "cpu", test_mode: bool = True
             )
         else:
             model = base_model
+
+    return model, image_transforms
+
+
+IMAGENET_MEAN = [0.485, 0.456, 0.406]
+IMAGENET_STD = [0.229, 0.224, 0.225]
+
+def get_model_efficientnet(checkpoint_path: str, num_classes: int = 4, device: str = "cpu"):
+    """
+    Load EfficientNet-B0 model and Image Transform
+    """
+    if not os.path.exists(checkpoint_path):
+        raise ValueError(f"Checkpoint path {checkpoint_path} does not exist.")
+
+    # 1. Initialize EfficientNet-B0 architecture
+    model = efficientnet_b0(weights=None)
+    
+    # Change the last classifier layer to match the 4 classes
+    model.classifier[1] = nn.Linear(model.classifier[1].in_features, num_classes)
+    
+    # 2. Load weights from best_model.pth file
+    checkpoint = torch.load(checkpoint_path, map_location=device)
+    state_dict = checkpoint.get('model_state_dict', checkpoint)
+    
+    # Handle the case where the model is trained with DataParallel (has 'module.')
+    new_state_dict = {}
+    for k, v in state_dict.items():
+        name = k.replace('module.', '') if k.startswith('module.') else k
+        new_state_dict[name] = v
+        
+    model.load_state_dict(new_state_dict, strict=True)
+    model.to(device)
+    model.eval()
+
+    # 3. Define Image Transforms
+    image_transforms = transforms.Compose([
+        transforms.Resize(224),
+        transforms.CenterCrop(224),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD)
+    ])
 
     return model, image_transforms

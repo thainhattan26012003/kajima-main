@@ -1,0 +1,41 @@
+{
+  "model": {
+    "method": "tuning",
+    "model_name": "efficientnet_b0",
+    "model_path": "checkpoints/eff/best_model.pth",
+    "peft_adapter_path": "",
+    "classifier_head": "linear",
+    "freeze_backbone": false
+  },
+  "training": {
+    "batch_size": 64,
+    "criterion_type": "CE",
+    "init_head": "class_mean",
+    "lora_initialization_strategy": "dora",
+    "lora_rank": 32,
+    "lr": 0.0005,
+    "micro_batch_size": 32,
+    "num_epochs": 40,
+    "num_layer_finetuned": 8,
+    "num_workers": 4,
+    "optimizer": "adamw",
+    "print_freq": 1,
+    "sampler": "random_sampler",
+    "seed": 32,
+    "weight_decay": 0.05
+  },
+  "testing": {
+    "batch_size": 8,
+    "num_workers": 4
+  },
+  "inference": {
+    "crop_size": 224,
+    "resolution": 256
+  },
+  "data": {
+    "train_dataset_dir": "datasets/kajima_dataset",
+    "test_dataset_dir": "datasets/kajima_test_dataset",
+    "num_classes": 4
+  }
+}
+
